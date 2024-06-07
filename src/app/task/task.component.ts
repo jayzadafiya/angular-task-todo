@@ -15,7 +15,7 @@ import { TastAddComponent } from './tast-add/tast-add.component';
   styleUrl: './task.component.scss',
 })
 export class TaskComponent implements OnInit, OnDestroy {
-  private subscription!: Subscription;
+  private subscriptions: Subscription[] = [];
 
   constructor(private taskService: TaskService) {}
 
@@ -30,21 +30,29 @@ export class TaskComponent implements OnInit, OnDestroy {
   task!: Task[];
 
   ngOnInit(): void {
-    this.subscription = this.taskService.fetchTasks().subscribe((data) => {
-      this.task = Object.entries(data).map((task) => ({
-        ...task[1],
-        id: task[0],
-      }));
-    });
+    const fetchSubscription = this.taskService
+      .fetchTasks()
+      .subscribe((data) => {
+        if (data) {
+          this.task = Object.entries(data).map((task) => ({
+            ...task[1],
+            id: task[0],
+          }));
+        }
+      });
+    this.subscriptions.push(fetchSubscription);
   }
 
-  removeTask(task: any) {
-    console.log(task);
+  removeTask(id: string) {
+    const removeSubscription = this.taskService.removeTask(id).subscribe(() => {
+      this.task = this.task.filter((task) => task.id !== id);
+    });
+    this.subscriptions.push(removeSubscription);
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+    if (this.subscriptions.length > 0) {
+      this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
   }
 }

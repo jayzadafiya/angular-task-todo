@@ -31,9 +31,10 @@ import { CommonModule } from '@angular/common';
   providers: [TaskService],
 })
 export class TastAddComponent implements OnInit, OnDestroy {
-  private subscription!: Subscription;
+  private subscriptions: Subscription[] = [];
   taskForm!: FormGroup;
   editMode: Boolean = false;
+  taskId!: string;
   displayedColumns: string[] = ['title', 'description', 'status'];
 
   task!: Task[];
@@ -46,18 +47,45 @@ export class TastAddComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.params.subscribe((params: Params) => {
+      this.taskId = params['id'];
       this.editMode = params['id'] != null;
     });
 
-    this.subscription = this.taskService.getTop5Tasks().subscribe((data) => {
-      this.task = data;
-    });
+    if (!this.editMode) {
+      const getSubscription = this.taskService
+        .getTop5Tasks()
+        .subscribe((data) => {
+          if (data) {
+            this.task = data;
+          }
+        });
+      this.subscriptions.push(getSubscription);
+    }
 
     this.initForm();
   }
 
   private initForm() {
     if (this.editMode) {
+      const editSubsription = this.taskService
+        .getTaskById(this.taskId)
+        .subscribe((task) => {
+          if (task) {
+            this.taskForm = this.fb.group(
+              {
+                title: [task.title, Validators.required],
+                description: [task.description, Validators.required],
+                status: [task.status, Validators.required],
+              },
+              {
+                updateOn: 'blur',
+              }
+            );
+          }
+
+          // this.taskForm.(task);
+          this.subscriptions.push(editSubsription);
+        });
     } else {
       this.taskForm = this.fb.group(
         {
@@ -73,20 +101,27 @@ export class TastAddComponent implements OnInit, OnDestroy {
   }
 
   onSubmit() {
+    let submitSubscription: Subscription;
     if (this.editMode) {
+      submitSubscription = this.taskService
+        .editTask(this.taskId, this.taskForm.value)
+        .subscribe((data) => data && this.router.navigate(['/task']));
     } else {
-      this.taskService
+      submitSubscription = this.taskService
         .addTodo(this.taskForm.value)
-        .subscribe((data) => console.log(data));
-
-      this.initForm();
-      this.router.navigate(['/task']);
+        .subscribe((data) => {
+          if (data) {
+            this.initForm();
+            this.router.navigate(['/task']);
+          }
+        });
     }
+    this.subscriptions.push(submitSubscription);
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+    if (this.subscriptions.length > 0) {
+      this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
   }
 }
