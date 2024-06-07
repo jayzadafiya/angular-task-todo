@@ -1,0 +1,17 @@
+button {
+  background-color: lightgreen;
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+table {
+  .edit-button {
+    background-color: lightblue;
+    color: slategray;
+    border: 1px solid lightblue;
+  }
+  .remove-btn {
+    background-color: lightcoral;
+    color: white;
+    border: 0;
+  }
+}
