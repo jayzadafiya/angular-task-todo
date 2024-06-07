@@ -14,7 +14,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
-
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-tast-add',
   standalone: true,
@@ -25,6 +25,7 @@ import { CommonModule } from '@angular/common';
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
+    MatSnackBarModule,
   ],
   templateUrl: './tast-add.component.html',
   styleUrl: './tast-add.component.scss',
@@ -36,13 +37,14 @@ export class TastAddComponent implements OnInit, OnDestroy {
   editMode: Boolean = false;
   taskId!: string;
   displayedColumns: string[] = ['title', 'description', 'status'];
-
   task!: Task[];
+
   constructor(
     private fb: FormBuilder,
     private taskService: TaskService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private _snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -117,6 +119,10 @@ export class TastAddComponent implements OnInit, OnDestroy {
         });
     }
     this.subscriptions.push(submitSubscription);
+  }
+
+  reset() {
+    this.initForm();
   }
 
   ngOnDestroy(): void {
